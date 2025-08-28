@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic Tac Toe </title>
+  <style>
+    :root{
+      --bg: #0f1226;
+      --panel: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.12);
+      --text: #e9ecf1;
+      --muted: #a9b0c2;
+      --accent-x: #7aa2ff;
+      --accent-o: #ff8aa1;
+      --win: #7dffb3;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial, 'Apple Color Emoji','Segoe UI Emoji';
+      background: radial-gradient(1200px 900px at 20% 10%, #1b1e3c 0%, transparent 60%),
+                  radial-gradient(1200px 900px at 80% 90%, #1a1133 0%, transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .app{
+      width:min(920px, 95vw);
+      display:grid;
+      gap:18px;
+      grid-template-columns: 1fr;
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border:1px solid var(--border);
+      border-radius:24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      backdrop-filter: blur(8px);
+    }
+    header.card{
+      padding:16px 20px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .title{font-weight:700;font-size:clamp(18px, 4vw, 24px);letter-spacing:0.3px}
+    .badges{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .badge{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--muted)}
+
+    .toolbar.card{padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+    .left, .right{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+    select, button{
+      appearance:none;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background: var(--panel);
+      color:var(--text);
+      padding:10px 14px;
+      font-size:14px;
+      cursor:pointer;
+      transition: transform .05s ease, background .2s ease, box-shadow .2s ease;
+    }
+    button:hover, select:hover{box-shadow:0 6px 18px rgba(0,0,0,0.25)}
+    button:active{transform:translateY(1px)}
+
+    .board.card{padding:18px}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+      width:min(520px, 90vw);
+      margin: 0 auto;
+    }
+    .cell{
+      width:100%;
+      aspect-ratio:1/1;
+      border-radius:22px;
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      display:grid;place-items:center;
+      font-weight:800;
+      font-size: clamp(42px, 8vw, 72px);
+      letter-spacing:1px;
+      user-select:none;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+      transition: box-shadow .2s ease, transform .05s ease, background .2s ease;
+    }
+    .cell:hover{box-shadow:0 10px 30px rgba(0,0,0,0.35)}
+    .cell:active{transform:translateY(1px)}
+    .cell[disabled]{cursor:not-allowed;opacity:0.8}
+    .mark-X{color:var(--accent-x); text-shadow:0 0 22px rgba(122,162,255,0.45)}
+    .mark-O{color:var(--accent-o); text-shadow:0 0 22px rgba(255,138,161,0.45)}
+
+    .cell.win{animation: glow 1.1s ease forwards}
+    @keyframes glow{
+      0%{box-shadow:0 0 0 rgba(125,255,179,0)}
+      100%{box-shadow:0 0 0 6px rgba(125,255,179,0.22), 0 0 40px rgba(125,255,179,0.45)}
+    }
+
+    .status.card{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .status .msg{font-size:16px;color:var(--muted)}
+    .scores{display:flex;gap:10px;flex-wrap:wrap}
+    .score{padding:8px 12px;border:1px solid var(--border);border-radius:14px;background:var(--panel);font-weight:600}
+    .score .k{color:var(--muted);font-weight:500;margin-right:6px}
+
+    footer{opacity:.7;font-size:12px;text-align:center;margin-top:6px}
+    a{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="card">
+      <div class="title">Tic Tac Toe</div>
+      <!-- <div class="badges">
+        <span class="badge">HTML</span>
+        <span class="badge">CSS</span>
+        <span class="badge">JavaScript</span>
+      </div> -->
+    </header>
+
+    <section class="toolbar card" aria-label="Game controls">
+      <div class="left">
+        <label for="mode">Mode</label>
+        <select id="mode" aria-label="Game mode">
+          <option value="pvp">2 Players</option>
+          <option value="cpu">Vs Computer</option>
+        </select>
+        <button id="reset">Reset Board</button>
+        <button id="resetAll" title="Reset board and scores">Reset All</button>
+      </div>
+      <div class="right">
+        <div class="score"><span class="k">X</span><span id="sx">0</span></div>
+        <div class="score"><span class="k">O</span><span id="so">0</span></div>
+        <div class="score"><span class="k">Ties</span><span id="st">0</span></div>
+      </div>
+    </section>
+
+    <section class="board card">
+      <div id="grid" class="grid" role="grid" aria-label="Tic Tac Toe board"></div>
+    </section>
+
+    <section class="status card">
+      <div class="msg" id="status">Player <strong>X</strong>'s turn</div>
+      <div class="msg" id="hint" aria-live="polite"></div>
+    </section>
+
+    <footer>Made with ♥ for learning. </footer>
+  </main>
+
+  <script>
+    // --- State ---
+    const grid = document.getElementById('grid');
+    const statusEl = document.getElementById('status');
+    const hintEl = document.getElementById('hint');
+    const modeEl = document.getElementById('mode');
+    const resetBtn = document.getElementById('reset');
+    const resetAllBtn = document.getElementById('resetAll');
+    const sxEl = document.getElementById('sx');
+    const soEl = document.getElementById('so');
+    const stEl = document.getElementById('st');
+
+    const WIN_LINES = [
+      [0,1,2],[3,4,5],[6,7,8], // rows
+      [0,3,6],[1,4,7],[2,5,8], // cols
+      [0,4,8],[2,4,6]          // diagonals
+    ];
+
+    let board, current, active, scores, mode;
+
+    function init(initial = false){
+      if(initial){
+        scores = {X:0, O:0, T:0};
+        sxEl.textContent = soEl.textContent = stEl.textContent = '0';
+      }
+      board = Array(9).fill(null);
+      current = 'X';
+      active = true;
+      updateStatus();
+      renderBoard();
+      hintEl.textContent = '';
+    }
+
+    function renderBoard(){
+      grid.innerHTML = '';
+      board.forEach((val, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        btn.setAttribute('role','gridcell');
+        btn.setAttribute('aria-label', `Cell ${i+1}`);
+        btn.addEventListener('click', () => handleMove(i));
+        if(val){
+          btn.textContent = val;
+          btn.classList.add('mark-' + val);
+          btn.disabled = true;
+        }
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleMove(i){
+      if(!active || board[i]) return;
+      place(i, current);
+      const result = checkState();
+      if(result.done){
+        endGame(result);
+        return;
+      }
+      switchTurn();
+      if(mode === 'cpu' && current === 'O' && active){
+        window.setTimeout(cpuMove, 300);
+      }
+    }
+
+    function place(i, mark){
+      board[i] = mark;
+      const cell = grid.children[i];
+      cell.textContent = mark;
+      cell.classList.add('mark-' + mark);
+      cell.disabled = true;
+    }
+
+    function switchTurn(){
+      current = current === 'X' ? 'O' : 'X';
+      updateStatus();
+    }
+
+    function updateStatus(msg){
+      if(msg){ statusEl.innerHTML = msg; return; }
+      statusEl.innerHTML = `Player <strong>${current}</strong>'s turn`;
+    }
+
+    function checkState(){
+      for(const [a,b,c] of WIN_LINES){
+        if(board[a] && board[a] === board[b] && board[a] === board[c]){
+          return {done:true, winner: board[a], line: [a,b,c]};
+        }
+      }
+      if(board.every(Boolean)) return {done:true, draw:true};
+      return {done:false};
+    }
+
+    function endGame(res){
+      active = false;
+      if(res.winner){
+        scores[res.winner]++;
+        if(res.line){
+          res.line.forEach(i=> grid.children[i].classList.add('win'));
+        }
+        updateStatus(`🎉 Player <strong>${res.winner}</strong> wins!`);
+      } else {
+        scores.T++;
+        updateStatus("It's a tie.");
+      }
+      sxEl.textContent = scores.X;
+      soEl.textContent = scores.O;
+      stEl.textContent = scores.T;
+    }
+
+    // --- CPU (simple smart) ---
+    function cpuMove(){
+      // Try: win -> block -> center -> corner -> random
+      const empty = board.map((v,i)=> v?null:i).filter(v=> v!==null);
+      if(!empty.length) return;
+
+      // Helper to simulate
+      const tryLine = (mark) => {
+        for(const [a,b,c] of WIN_LINES){
+          const line = [a,b,c];
+          const marks = line.map(i=> board[i]);
+          const countMark = marks.filter(m=> m===mark).length;
+          const countEmpty = marks.filter(m=> !m).length;
+          if(countMark === 2 && countEmpty === 1){
+            const idx = line[marks.indexOf(null)];
+            return idx;
+          }
+        }
+        return null;
+      };
+
+      // 1) Win if possible
+      let idx = tryLine('O');
+      if(idx===null){
+        // 2) Block X
+        idx = tryLine('X');
+      }
+      if(idx===null){
+        // 3) Take center
+        if(!board[4]) idx = 4;
+      }
+      if(idx===null){
+        // 4) Corner
+        const corners = [0,2,6,8].filter(i=> !board[i]);
+        if(corners.length) idx = corners[Math.floor(Math.random()*corners.length)];
+      }
+      if(idx===null){
+        // 5) Any
+        idx = empty[Math.floor(Math.random()*empty.length)];
+      }
+      place(idx,'O');
+      const res = checkState();
+      if(res.done){ endGame(res); return; }
+      switchTurn();
+    }
+
+    // --- Events ---
+    modeEl.addEventListener('change', (e)=>{
+      mode = e.target.value;
+      hintEl.textContent = mode === 'cpu' ? 'Computer plays as O.' : '';
+      init(false);
+    });
+    resetBtn.addEventListener('click', ()=> init(false));
+    resetAllBtn.addEventListener('click', ()=>{ init(true); });
+
+    // Boot
+    mode = modeEl.value;
+    init(true);
+  </script>
+</body>
+</html>
